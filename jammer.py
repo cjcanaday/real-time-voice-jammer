@@ -3,6 +3,7 @@ import numpy as np
 from collections import deque
 import argparse
 import time
+import sys
 
 # Command Line Args
 parser = argparse.ArgumentParser(description="Real-Time Voice Jammer")
@@ -14,7 +15,14 @@ parser.add_argument('--blocksize', type=int, default=2048,
                     help='Block size (default: 2048)')
 parser.add_argument('--device', type=int, nargs=2, metavar=('IN', 'OUT'), default=[1,3],
                     help='Input and output device IDs (e.g. --device 1 3)')
+parser.add_argument('--list-devices', action='store_true', help='List audio devices and exit')
 args = parser.parse_args()
+
+# === LIST DEVICES MODE ===
+if args.list_devices:
+    print("\nAvailable audio devices:\n")
+    print(sd.query_devices())
+    sys.exit()
 
 # Config Values
 DELAY = args.delay
@@ -24,16 +32,16 @@ DEVICE = args.device
 
 # Input Monitoring
 SILENCE_THRESHOLD = 1e-4
-SILENT_BLOCK_LIMIT = 100
+SILENT_BLOCK_LIMIT = 75
 silence_counter = 0
 
 DELAY_SAMPLES = int(np.ceil(DELAY * SAMPLE_RATE / BLOCK_SIZE))
 BUFFER = deque(maxlen=DELAY_SAMPLES)
 
 def jammer(indata, outdata, frames, time, status):
+    global silence_counter
     if status:
         print(status, flush=True)
-
     
     volume = np.linalg.norm(indata)
     if volume < SILENCE_THRESHOLD: # check if there is audio in input
@@ -73,6 +81,7 @@ try:
                 print("No audio input detected.")
                 print("Try specifying a device manually with:")
                 print("   python jammer.py --device <input_id> <output_id>")
+                silence_counter = 0
 
 
 except KeyboardInterrupt:
