@@ -8,7 +8,7 @@ import sys
 # Command Line Args
 parser = argparse.ArgumentParser(description="Real-Time Voice Jammer")
 parser.add_argument('--delay', type=float, default=0.3,
-                    help='Delay in seconds (default: 0.3)')
+                    help='Delay in seconds. Set to 0 for live-passthrough (default: 0.3)')
 parser.add_argument('--samplerate', type=int, default=44100,
                     help='Sample rate in Hz (default: 44100)')
 parser.add_argument('--blocksize', type=int, default=2048,
@@ -48,6 +48,13 @@ def jammer(indata, outdata, frames, time, status):
         silence_counter += 1 # if no audio, keep track for how long
     else:
         silence_counter = 0
+
+    # if delay = 0, live passthrough
+    if DELAY == 0: 
+        outdata[:] = indata
+        return
+
+    # If non-zero delay, then:
 
     # Store a copy of the current input block
     BUFFER.append(indata.copy())
